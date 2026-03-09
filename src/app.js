@@ -1,5 +1,5 @@
 // ─── app.js ───────────────────────────────────────────────────────────────────
-import { loginWithGoogle, logout, onAuth, getUserProfile,
+import { loginWithGoogle, handleRedirectResult, logout, onAuth, getUserProfile,
          getProgress, saveProgress, enrollStudent, unenrollStudent,
          getAllStudents, deleteStudent, getAllProgress, SCHOOL_DOMAIN, ADMIN_EMAILS }
   from "./firebase.js";
@@ -298,10 +298,8 @@ function LoginScreen() {
   const doLogin = async () => {
     errorDiv.textContent = "";
     try {
-      const user = await loginWithGoogle();
-      const profile = await getUserProfile(user.uid);
-      const progress = await getProgress(user.uid);
-      setState({ user, profile, progress, screen: profile?.role==="admin" ? "admin" : "home" });
+      await loginWithGoogle();
+      // La pàgina es recarregarà automàticament després del redirect
     } catch(e) {
       errorDiv.textContent = e.message || "Error d'autenticació";
     }
@@ -939,17 +937,25 @@ function render() {
 
 render();
 
+// Gestiona el resultat del redirect de Google en tornar a la pàgina
+handleRedirectResult().catch(() => {});
+
 onAuth(async user => {
   if(!user) { setState({screen:"login",user:null,profile:null}); return; }
   try {
     const profile  = await getUserProfile(user.uid);
+    // Si el perfil no existeix encara (pot passar just després del redirect), crea'l
+    if (!profile) {
+      setState({screen:"login"});
+      return;
+    }
     const progress = await getProgress(user.uid);
     if(profile?.role==="admin") {
       const students    = await getAllStudents();
       const allProgress = await getAllProgress();
       setState({user, profile, progress, screen:"admin", students, allProgress});
     } else {
-      setState({user, profile, progress, screen: profile ? "home" : "login"});
+      setState({user, profile, progress, screen:"home"});
     }
   } catch(e) {
     setState({screen:"login"});
