@@ -833,8 +833,8 @@ function ProgressTab() {
         )
       ),
       // Per-course progress bars
-      ...myCourses.map(cid=>{
-        const course = COURSES[cid]; if(!course) return null;
+      ...myCourses.filter(cid=>!!COURSES[cid]).map(cid=>{
+        const course = COURSES[cid];
         const lessons = course.units.flatMap(u=>u.lessons);
         const cDone   = lessons.filter(l=>!!(prog.completed||{})[l.id]).length;
         return el("div",{style:{marginBottom:6}},
