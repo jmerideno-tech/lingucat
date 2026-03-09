@@ -943,12 +943,24 @@ handleRedirectResult().catch(() => {});
 onAuth(async user => {
   if(!user) { setState({screen:"login",user:null,profile:null}); return; }
   try {
-    const profile  = await getUserProfile(user.uid);
-    // Si el perfil no existeix encara (pot passar just després del redirect), crea'l
+    let profile = await getUserProfile(user.uid);
+
+    // Si no existeix el perfil, el creem ara (pot passar just després del redirect)
     if (!profile) {
-      setState({screen:"login"});
-      return;
+      const { doc, setDoc, serverTimestamp } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
+      const { db, ADMIN_EMAILS: admins } = await import("./firebase.js");
+      await setDoc(doc(db, "users", user.uid), {
+        uid:       user.uid,
+        email:     user.email,
+        name:      user.displayName || user.email.split("@")[0],
+        photo:     user.photoURL || "",
+        role:      ADMIN_EMAILS.includes(user.email) ? "admin" : "student",
+        courses:   [],
+        createdAt: serverTimestamp(),
+      });
+      profile = await getUserProfile(user.uid);
     }
+
     const progress = await getProgress(user.uid);
     if(profile?.role==="admin") {
       const students    = await getAllStudents();
@@ -958,6 +970,7 @@ onAuth(async user => {
       setState({user, profile, progress, screen:"home"});
     }
   } catch(e) {
+    console.error(e);
     setState({screen:"login"});
   }
 });
