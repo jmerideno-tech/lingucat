@@ -3,7 +3,7 @@
 // Instruccions: https://console.firebase.google.com → Nou projecte → Web app
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged }
+import { getAuth, GoogleAuthProvider, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged }
   from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import { getFirestore, doc, getDoc, setDoc, updateDoc, collection,
   getDocs, deleteDoc, serverTimestamp, query, orderBy }
@@ -38,7 +38,12 @@ export const ADMIN_EMAILS = [
 export async function loginWithGoogle() {
   const provider = new GoogleAuthProvider();
   provider.setCustomParameters({ hd: SCHOOL_DOMAIN.replace("@","") });
-  const result = await signInWithPopup(auth, provider);
+  await signInWithRedirect(auth, provider);
+}
+
+export async function handleRedirectResult() {
+  const result = await getRedirectResult(auth);
+  if (!result) return null;
   const user = result.user;
 
   // Comprova que el correu pertany al domini de l'escola
