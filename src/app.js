@@ -747,16 +747,14 @@ function StudentsTab() {
   // Stats row
   const totalEnrolled = students.filter(s=>(s.courses||[]).length>0).length;
   wrap.appendChild(
-   el("div",{style:{display:"flex",gap:12,marginBottom:16}},
+    el("div",{style:{display:"flex",gap:12,marginBottom:16}},
       el("div",{style:{flex:1,background:"rgba(255,255,255,0.07)",borderRadius:14,padding:"14px",textAlign:"center"}},
-        el("div",{style:{fontSize:24}},"Alumnes"),
-        el("div",{style:{fontFamily:"'Fredoka One',cursive",fontSize:22,color:"#58CC02"}},String(students.length)),
-        el("div",{style:{fontSize:11,color:"rgba(255,255,255,0.5)"}},"total")
+        el("div",{style:{fontSize:13,fontWeight:700,color:"rgba(255,255,255,0.5)"}}, "Alumnes"),
+        el("div",{style:{fontFamily:"'Fredoka One',cursive",fontSize:28,color:"#58CC02"}}, String(students.length))
       ),
       el("div",{style:{flex:1,background:"rgba(255,255,255,0.07)",borderRadius:14,padding:"14px",textAlign:"center"}},
-        el("div",{style:{fontSize:24}},"Inscrits"),
-        el("div",{style:{fontFamily:"'Fredoka One',cursive",fontSize:22,color:"#58CC02"}},String(totalEnrolled)),
-        el("div",{style:{fontSize:11,color:"rgba(255,255,255,0.5)"}},"als cursos")
+        el("div",{style:{fontSize:13,fontWeight:700,color:"rgba(255,255,255,0.5)"}}, "Inscrits"),
+        el("div",{style:{fontFamily:"'Fredoka One',cursive",fontSize:28,color:"#58CC02"}}, String(totalEnrolled))
       )
     )
   );
