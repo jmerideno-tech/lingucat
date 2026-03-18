@@ -938,18 +938,18 @@ function render() {
 
 render();
 
-// Gestiona el resultat del redirect de Google en tornar a la pàgina
-handleRedirectResult().catch(() => {});
+// ── Gestió d'autenticació ──────────────────────────────────────────────────────
+// Primer gestionem el possible resultat del redirect de Google,
+// després escoltem canvis d'estat d'autenticació.
 
-onAuth(async user => {
-  if(!user) { setState({screen:"login",user:null,profile:null}); return; }
+async function loadUser(user) {
   try {
     let profile = await getUserProfile(user.uid);
-
-    // Si no existeix el perfil, el creem ara (pot passar just després del redirect)
     if (!profile) {
-      const { doc, setDoc, serverTimestamp } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
-      const { db, ADMIN_EMAILS: admins } = await import("./firebase.js");
+      // Crea el perfil si no existeix (primera vegada)
+      const { db } = await import("./firebase.js");
+      const { doc, setDoc, serverTimestamp } =
+        await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
       await setDoc(doc(db, "users", user.uid), {
         uid:       user.uid,
         email:     user.email,
@@ -961,17 +961,53 @@ onAuth(async user => {
       });
       profile = await getUserProfile(user.uid);
     }
-
     const progress = await getProgress(user.uid);
-    if(profile?.role==="admin") {
+    if (profile?.role === "admin") {
       const students    = await getAllStudents();
       const allProgress = await getAllProgress();
-      setState({user, profile, progress, screen:"admin", students, allProgress});
+      setState({ user, profile, progress, screen:"admin", students, allProgress });
     } else {
-      setState({user, profile, progress, screen:"home"});
+      setState({ user, profile, progress, screen:"home" });
     }
   } catch(e) {
-    console.error(e);
-    setState({screen:"login"});
+    console.error("loadUser error:", e);
+    setState({ screen:"login" });
+  }
+}
+
+// Gestiona primer el redirect result, i després escolta onAuth
+handleRedirectResult()
+  .then(redirectUser => {
+    if (redirectUser) {
+      // Venim d'un redirect reeixit — onAuth s'encarregarà
+      return;
+    }
+    // No venim de redirect — inicialitzem onAuth normalment
+    onAuth(user => {
+      if (!user) {
+        setState({ screen:"login", user:null, profile:null });
+      } else {
+        loadUser(user);
+      }
+    });
+  })
+  .catch(e => {
+    console.error("Redirect error:", e);
+    onAuth(user => {
+      if (!user) {
+        setState({ screen:"login", user:null, profile:null });
+      } else {
+        loadUser(user);
+      }
+    });
+  });
+
+// Sempre escoltem onAuth per si ja hi havia sessió activa
+onAuth(user => {
+  if (state.screen !== "loading") return; // ja inicialitzat
+  if (!user) {
+    setState({ screen:"login", user:null, profile:null });
+  } else {
+    loadUser(user);
   }
 });
